@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
@@ -19,7 +20,7 @@ async function run(){
     try{
         await client.connect();
         const toolCollection = client.db('toolswise').collection('tools');
-        const orderCollection = client.db('toolswise').collection('tools');
+        const orderCollection = client.db('toolswise').collection('orders');
         const userCollection = client.db('toolswise').collection('users');
 
         // get all tools
@@ -40,7 +41,8 @@ async function run(){
                 $set: user,
               };
               const result = await userCollection.updateOne(filter, updateDoc, options);
-              res.send(result);
+              const token = jwt.sign({email:email}, process.env.ACCESS_TOKEN_SERECT, { expiresIn: '1h' })
+              res.send({result, token});
         })
 
         // get one tool
