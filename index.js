@@ -19,6 +19,8 @@ async function run(){
     try{
         await client.connect();
         const toolCollection = client.db('toolswise').collection('tools');
+        const orderCollection = client.db('toolswise').collection('tools');
+        const userCollection = client.db('toolswise').collection('users');
 
         // get all tools
         app.get('/tool', async ( req, res) =>{
@@ -28,6 +30,19 @@ async function run(){
             res.send(tools);
         })
 
+
+        app.put('/user/:email', async(req, res) =>{
+            const email = req.params.email;
+            const user = req.body;
+            const filter = {email: email};
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+              };
+              const result = await userCollection.updateOne(filter, updateDoc, options);
+              res.send(result);
+        })
+
         // get one tool
         app.get('/tool/:id', async(req, res) =>{
             const id = req.params.id;
@@ -35,6 +50,12 @@ async function run(){
             const tool = await toolCollection.findOne(query);
             res.send(tool)
         })
+
+        app.post('/order', async(req, res)=>{
+      const order = req.body;
+      const result = orderCollection.insertOne(order);
+      return res.send(result);
+    })
     }
     finally{
 
