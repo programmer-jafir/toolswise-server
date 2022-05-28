@@ -16,59 +16,69 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-async function run(){
-    try{
+async function run() {
+    try {
         await client.connect();
         const toolCollection = client.db('toolswise').collection('tools');
         const orderCollection = client.db('toolswise').collection('orders');
         const userCollection = client.db('toolswise').collection('users');
 
         // get all tools
-        app.get('/tool', async ( req, res) =>{
-            const query= {};
+        app.get('/tool', async (req, res) => {
+            const query = {};
             const cursor = toolCollection.find(query);
             const tools = await cursor.toArray();
             res.send(tools);
         })
 
 
-        app.put('/user/:email', async(req, res) =>{
+        app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
-            const filter = {email: email};
+            const filter = { email: email };
             const options = { upsert: true };
             const updateDoc = {
                 $set: user,
-              };
-              const result = await userCollection.updateOne(filter, updateDoc, options);
-              const token = jwt.sign({email:email}, process.env.ACCESS_TOKEN_SERECT, { expiresIn: '1h' })
-              res.send({result, token});
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SERECT, { expiresIn: '1h' })
+            res.send({ result, token });
         })
 
         // get one tool
-        app.get('/tool/:id', async(req, res) =>{
+        app.get('/tool/:id', async (req, res) => {
             const id = req.params.id;
-            const query={_id: ObjectId(id)};
+            const query = { _id: ObjectId(id) };
             const tool = await toolCollection.findOne(query);
             res.send(tool)
         })
 
-        app.post('/order', async(req, res)=>{
-      const order = req.body;
-      const result = orderCollection.insertOne(order);
-      return res.send(result);
-    })
+
+        app.get('/order', async (req, res) => {
+            const userEmail = req.query.userEmail;
+            
+            // console.log(authorization);
+            const query = { userEmail: userEmail };
+            const orders = await orderCollection.find(query).toArray();
+            res.send(orders);
+        })
+
+        app.post('/order', async (req, res) => {
+            const order = req.body;
+            const result = orderCollection.insertOne(order);
+            return res.send(result);
+        })
     }
-    finally{
+    finally {
 
     }
 }
 
 run().catch(console.dir);
 
-app.get('/', (req, res) =>{
+app.get('/', (req, res) => {
     res.send('Running manufacturer-website-server')
 });
-app.listen(port, () =>{
+app.listen(port, () => {
     console.log('Listening to port', port)
 })
