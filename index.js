@@ -46,6 +46,11 @@ async function run() {
             const tools = await cursor.toArray();
             res.send(tools);
         })
+        app.post('/tool', async(req, res) =>{
+            const addtool = req.body;
+            const result = await toolCollection.insertOne(addtool);
+            res.send(result);
+          })
 
         app.get('/user', verifyJWT, async(req, res) =>{
             const users = await userCollection.find().toArray();
