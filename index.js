@@ -33,6 +33,47 @@ function verifyJWT(req, res, next) {
     });
 }
 
+const emailSenderOptions = {
+    auth: {
+      api_key: process.env.EMAIL_SENDER_KEY
+    }
+  }
+  
+  const emailClient = nodemailer.createTransport(sgTransport(emailSenderOptions));
+  
+  function sendOrderEmail(order) {
+    const { userEmail, userName, toolName, price, perPrice, quantity } = order;
+  
+    var email = {
+      from: process.env.EMAIL_SENDER,
+      to: userEmail,
+      subject: `We have received your order for ${toolName} is Confirmed`,
+      text: `Your order for this tool ${toolName} is total cost ${price}$ , each tool price is ${perPrice}`,
+      html: `
+        <div>
+          <p> Hello ${userName}, </p>
+          <h3>Thank you for your ordering . </h3>
+          <h3>We have received your order</h3>
+          <p>You order quantity is  ${quantity}</p>
+          <h3>Our Address</h3>
+          <p>Andor Killa Bandorban</p>
+          <p>Bangladesh</p>
+          <a href="https://web.programming-hero.com/">unsubscribe</a>
+        </div>
+      `
+    };
+  
+    emailClient.sendMail(email, function (err, info) {
+      if (err) {
+        console.log(err);
+      }
+      else {
+        console.log('Message sent: ', info);
+      }
+    });
+  
+  }
+
 function sendPaymentConfirmationEmail(order) {
     const { userEmail, userName, toolName, price, perPrice, quantity } = order;
   
@@ -200,6 +241,7 @@ async function run() {
         app.post('/order', async (req, res) => {
             const order = req.body;
             const result = orderCollection.insertOne(order);
+            sendOrderEmail(order);
             return res.send(result);
         })
     }
